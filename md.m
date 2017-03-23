@@ -6,7 +6,7 @@ classdef md
     properties(Dependent=true)
         std
     end
-    methods(Static=true)
+    methods(Static=true, Access=private, Hidden=true)
         function out=classdim(a)
             if isscalar(a)
                 out=1;
@@ -18,6 +18,41 @@ classdef md
                 throw(MException('md:wrongInput:dimension','Only matrix are handled'))
             end
         end
+    end
+    methods(Static=true, Access=protected, Hidden=true)
+        function out=arr2struct(arr)
+            l=length(arr);
+            out(l)=struct('val',[]);
+            for i=1:l
+            out(i).val=arr(i);
+            end
+        end
+    end
+    methods(Static=true, Access=public)
+        function out = exprInc( expr, vec )
+            args=argnames(expr);
+            l=length(args);
+            assert(l==length(vec),'md:wrongInput:dimension','vec must have same length of args for expr');
+            D=sym('D',[1 l]);
+            g2=gradient(expr).^2;
+            varExpr=symfun(sum(g2.*D.'),[args D]);
+            tmp=md.arr2struct([[vec.val] [vec.var]]);
+            out=md(eval(expr(vec.val)),eval(varExpr(tmp.val)));
+        end
+        function out=md2struct(a)
+            assert(isa(a,'md'),'md:wrongInput:type','type md in input plz');
+            [m,n]=size(a);
+            out(m,n)=struct('val',[],'std',[]);
+            for i=1:m
+                for j=1:n
+                    out(i,j).val=a(i,j).val;
+                    out(i,j).std=a(i,j).std;
+                end
+            end
+        end
+     %   function out=struct2md(a)
+      %      
+       % end
     end
     methods
         function out=get.std(a)
@@ -191,16 +226,5 @@ classdef md
                 throw(MException('md:programFlow:unreachablePoint','Something really bad has happened'));
             end
         end
-        
- %       function out=exprInc(expr,varargin)
- %           if nargin==1
- %               vars=symvar(expr);
- %               l=length(vars);
- %               var=sym('var');
- %               for i=1:l
- %                   var(i)=(diff(expr,vars(i)))^2*
-                    
     end
 end
-
-% disp
