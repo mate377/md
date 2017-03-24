@@ -37,7 +37,7 @@ classdef md
             g2=gradient(expr).^2;
             varExpr=symfun(sum(g2.*D.'),[args D]);
             tmp=md.arr2struct([[vec.val] [vec.var]]);
-            out=md(eval(expr(vec.val)),eval(varExpr(tmp.val)));
+            out=md(eval(expr(vec.val)),eval(varExpr(tmp.val)),'V');
         end
         function out=md2struct(a)
             assert(isa(a,'md'),'md:wrongInput:type','type md in input plz');
