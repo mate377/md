@@ -73,15 +73,10 @@ classdef md
         function out = exprInc( expr, vec )
             args=argnames(expr);
             l=length(args);
+            assert(l==length(vec),'md:wrongInput:dimension','vec must have same length of args for expr');
             D=sym('D',[1 l]);
             g2=gradient(expr).^2;
             varExpr=symfun(sum(g2.*D.'),[args D]);
-            if nargin==1
-                fprintf('val = '); disp(expr);
-                fprintf('var = '); disp(varExpr);
-                return
-            end
-            assert(l==length(vec),'md:wrongInput:dimension','vec must have same length of args for expr');
             tmp=md.arr2struct([[vec.val] [vec.var]]);
             out=md(eval(expr(vec.val)),eval(varExpr(tmp.val)),'V');
         end
@@ -247,8 +242,7 @@ classdef md
         % you can set, probably hidden, but i used only here. I dunno.
         function out=ne(a,b)
             a=md(a); b=md(b);
-            sigma=1.5; % 1 is too few, 2 is too much, how many princess are
-            % there in the castle? No, seriously.
+            sigma=1.5;
             c=a-b;
             out=abs([c.val])<sigma.*[c.inc];
         end
@@ -286,13 +280,7 @@ classdef md
             out=md(log([a.val]),([a.val].^-2).*[a.var],'V');
         end
         
-        % Here i overload the disp function which is the function
-        % automatically called when the interpreter need to display the
-        % object. For a scalar is not very different from the default, but
-        % for the vectors it print a table: 1column is the progressive
-        % number, 2column is the value and 3column the uncertainty. or the
-        % matrix it simply print first the matrix of the value and then the
-        % matrix of the std.
+        % o
         function disp(a)
             if isscalar(a)
                 fprintf('\t%s : %g','val',a.val);
