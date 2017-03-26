@@ -30,6 +30,14 @@
 % overloaded also disp in order to have a nice presentation of md objects.
 % by now the code is extendend when new functionality are needed. 
 
+% TODO:
+%   - read the MException class doc in order to concatenate exception in stack
+%   - read the mat2cell doc because cells can generate comma sep. lists. Is
+%   better than use the arr2struct function.
+%   - try to do a getter for also val and var, which don't require the
+%   square brackets to obtain he value
+%   - comment on the latest functions created.
+
 classdef md
     properties
         val
@@ -86,8 +94,7 @@ classdef md
             out=md(eval(expr(vec.val)),eval(varExpr(tmp.val)),'V');
         end
         % transform an md object in a struct with the same structure.
-        % Useful as interface between functionality. The method struct2md
-        % is not yet ready
+        % Useful as interface between functionality.
         function out=md2struct(a)
             assert(isa(a,'md'),'md:wrongInput:type','type md in input plz');
             [m,n]=size(a);
@@ -99,9 +106,35 @@ classdef md
                 end
             end
         end
-     %   function out=struct2md(a)
-      %      
-       % end
+        % does the opposite of the precedent method
+        function out=struct2md(a)
+            try
+                fm=cell2mat(fields(a));
+            catch ME
+                if(ME.identifier=='MATLAB:UndefinedFunction')
+                    cause=MException('md:wrongInput:type','need a struct in input');
+                    ME.addCause(ME,cause);
+                end
+                rethrow(ME);
+            end
+            assert(string(fm(1,:))=='val' && string(fm(2,:))=='std','md:wrongInput:type','struct must have val and std parameters');
+            [m,n]=size(a);
+            out(m,n)=md();
+            for i=1:m
+                for k=1:n
+                    out(i,k)=md(a(i,k).val,a(i,k).std);
+                end
+            end
+        end
+        % it call builtin errorbar with val and std, instead of separate
+        % manually the args. Use the args variable, obtainde from the
+        % conversion cell2struct allows me to obtain a comma separated list.
+        % This csl can be passed as argument to errorbar.
+        function out=errorbar(x,y,varargin)
+           x=md(x); y=md(y);
+           args=cell2struct(varargin,'val',1);
+           out=errorbar([x.val],[y.val],[y.std]./2,[y.std]./2,[x.std]./2,[x.std]./2,args.val);
+        end
     end
     methods
         % getter for std
@@ -285,8 +318,7 @@ classdef md
         function out=log(a)
             out=md(log([a.val]),([a.val].^-2).*[a.var],'V');
         end
-        
-        % Here i overload the disp function which is the function
+        % Here i've overload the disp function which is the function
         % automatically called when the interpreter need to display the
         % object. For a scalar is not very different from the default, but
         % for the vectors it print a table: 1column is the progressive
@@ -297,7 +329,6 @@ classdef md
             if isscalar(a)
                 fprintf('\t%s : %g','val',a.val);
                 fprintf('\n\t%s : %g\n\n','std',a.std);
-                %builtin('disp',a);
             elseif isvector(a)
                 str=sprintf('  %c   %12s   %12s\n','n','value','std');
                 builtin('disp',str);
