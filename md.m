@@ -33,7 +33,7 @@
 % TODO:
 %   - read the MException class doc in order to concatenate exception in stack
 %   - try to do a getter for also val and var, which don't require the
-%   square brackets to obtain he value
+%   square brackets to obtain the value
 %   - comment on the latest functions created.
 %   - work on test script
 
@@ -66,7 +66,7 @@ classdef md
         % order to perform the substitution and obtain finally a value. The
         % propagation of uncertainty is done automatically. Called with
         % only one arg it print the symbolic expression for value and
-        % variance
+        % variance.
         function out = exprInc( expr, vec )
             args=argnames(expr);
             l=length(args);
@@ -79,6 +79,8 @@ classdef md
                 return
             end
             assert(l==length(vec),'md:wrongInput:dimension','vec must have same length of args for expr');
+            % I need a cell for pass different arguments to the symfun
+            % varExpr
             tmpc=num2cell([[vec.val] [vec.var]]);
             out=md(eval(expr(vec.val)),eval(varExpr(tmpc{:})),'V');
         end
