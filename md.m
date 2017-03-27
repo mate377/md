@@ -32,11 +32,10 @@
 
 % TODO:
 %   - read the MException class doc in order to concatenate exception in stack
-%   - read the mat2cell doc because cells can generate comma sep. lists. Is
-%   better than use the arr2struct function.
 %   - try to do a getter for also val and var, which don't require the
 %   square brackets to obtain he value
 %   - comment on the latest functions created.
+%   - work on test script
 
 classdef md
     properties
@@ -60,18 +59,8 @@ classdef md
             end
         end
     end
-    methods(Static=true, Access=protected, Hidden=true)
-        % used in a function because i need to pass a variable number of
-        % parameters. That function is builtin into matlab so when yo call
-        % function(out.val) it expand in the right number of parameters
-        function out=arr2struct(arr)
-            l=length(arr);
-            out(l)=struct('val',[]);
-            for i=1:l
-            out(i).val=arr(i);
-            end
-        end
-    end
+    %methods(Static=true, Access=protected, Hidden=true)
+    %end
     methods(Static=true, Access=public)
         % this function takes in input a symfun object and a vector in
         % order to perform the substitution and obtain finally a value. The
@@ -90,8 +79,8 @@ classdef md
                 return
             end
             assert(l==length(vec),'md:wrongInput:dimension','vec must have same length of args for expr');
-            tmp=md.arr2struct([[vec.val] [vec.var]]);
-            out=md(eval(expr(vec.val)),eval(varExpr(tmp.val)),'V');
+            tmpc=num2cell([[vec.val] [vec.var]]);
+            out=md(eval(expr(vec.val)),eval(varExpr(tmpc{:})),'V');
         end
         % transform an md object in a struct with the same structure.
         % Useful as interface between functionality.
