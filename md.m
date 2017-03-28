@@ -36,6 +36,17 @@
 %   square brackets to obtain the value
 %   - comment on the latest functions created.
 %   - work on test script
+%   - add regression, chi2 test
+%   - function that pretty print a struct of md data. for example, first
+%   the scalar parameters and then the vectors. If the vectors are related
+%   it prints the vectors side by side. It will be a static method (struct
+%   in input) and maybe it ignore the other type of data (non numeric or 
+%   md). It could have a a field like "format" that specifies when vectors
+%   are related and how. Maybe I can obtain the behavior subclassing struct
+%   object.
+%   - I need an object containing linear regression parameters so usual
+%   operation like find intersections and print lines become short and
+%   natural.
 
 classdef md
     properties
@@ -336,6 +347,32 @@ classdef md
             else
                 throw(MException('md:programFlow:unreachablePoint','Something really bad has happened'));
             end
+        end
+        % Lchi2 perform a chi2 linear regression of data md in input and
+        % calculate the parameters of the low in the form A+B*X. The
+        % uncertainties on the x are first discarded  and then propagated
+        % through the linear law.
+        function [A, B, chi] = Lchi2(x,y,n)
+
+            x1 = [x.val];
+            dx1 = [x.std];
+            y1 = [y.val];
+            dy1 = [y.std];
+
+            dyt = dy1;
+
+            for k=1:n
+            w = dyt.^(-2);
+            tB = (sum(w)*sum(w.*x1.*y1) - sum(w.*y1)*sum(w.*x1))/(sum(w)*sum(w.*(x1.^2)) - (sum(w.*x1))^2);
+            dyt = sqrt(dyt.^2 + (tB*dx1).^2);
+            end
+
+            tA = (sum(w.*(x1.^2))*sum(w.*y1) - sum(w.*x1)*sum(w.*x1.*y1))/(sum(w)*sum(w.*(x1.^2)) - (sum(w.*x1))^2);
+            tdA = sqrt(sum(w.*(x1.^2))/(sum(w)*sum(w.*(x1.^2)) - (sum(w.*x1))^2));
+            tdB = sqrt(sum(w)/(sum(w)*sum(w.*(x1.^2)) - (sum(w.*x1))^2));
+            chi = sum(((y1 - tA*ones(1, length(y1))-tB*x1).^2)./(dyt.^2));
+            A=md(tA,tdA);
+            B=md(tB,tdB);
         end
     end
 end
